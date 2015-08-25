@@ -104,6 +104,7 @@ gld${EMULATION_NAME}_before_parse (void)
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
   `if test -n "$CALL_NOP_BYTE" ; then echo link_info.call_nop_byte = $CALL_NOP_BYTE; fi`;
+  link_info.sharable_sections = `if test "$SHARABLE_SECTIONS" = "yes" ; then echo TRUE ; else echo FALSE ; fi`;
 }
 
 EOF
@@ -1852,6 +1853,12 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
   int isdyn = 0;
   int iself = s->owner->xvec->flavour == bfd_target_elf_flavour;
   unsigned int sh_type = iself ? elf_section_type (s) : SHT_NULL;
+
+  /* Orphaned sharable sections won't have correct page
+     requirements.  */
+  if (elf_section_flags (s) & SHF_GNU_SHARABLE)
+    einfo ("%F%P: unable to place orphaned sharable section %A (%B)\n",
+	   s, s->owner);
 
   if (!bfd_link_relocatable (&link_info)
       && link_info.combreloc
