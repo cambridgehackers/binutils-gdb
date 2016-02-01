@@ -418,7 +418,7 @@ stdin_event_handler (int error, gdb_client_data client_data)
       printf_unfiltered (_("error detected on stdin\n"));
       delete_file_handler (input_fd);
       /* If stdin died, we may as well kill gdb.  */
-      quit_command ((char *) 0, stdin == instream);
+      quit_command ((char *) 0, stdin == ui->instream);
     }
   else
     {
@@ -465,11 +465,12 @@ async_disable_stdin (void)
 void
 command_handler (char *command)
 {
+  struct ui *ui = current_ui;
   struct cleanup *stat_chain;
   char *c;
 
   clear_quit_flag ();
-  if (instream == stdin)
+  if (ui->instream == stdin)
     reinitialize_more_filter ();
 
   stat_chain = make_command_stats_cleanup (1);
@@ -479,7 +480,7 @@ command_handler (char *command)
     ;
   if (c[0] != '#')
     {
-      execute_command (command, instream == stdin);
+      execute_command (command, ui->instream == stdin);
 
       /* Do any commands attached to breakpoint we stopped at.  */
       bpstat_do_actions ();
@@ -546,6 +547,7 @@ char *
 handle_line_of_input (struct buffer *cmd_line_buffer,
 		      char *rl, int repeat, char *annotation_suffix)
 {
+  struct ui *ui = current_ui;
   char *p1;
   char *cmd;
 
@@ -560,7 +562,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
      command, but leave ownership of memory to the buffer .  */
   cmd_line_buffer->used_size = 0;
 
-  if (annotation_level > 1 && instream == stdin)
+  if (annotation_level > 1 && ui->instream == stdin)
     {
       printf_unfiltered (("\n\032\032post-"));
       puts_unfiltered (annotation_suffix);
@@ -577,8 +579,8 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
     }
 
   /* Do history expansion if that is wished.  */
-  if (history_expansion_p && instream == stdin
-      && ISATTY (instream))
+  if (history_expansion_p && ui->instream == stdin
+      && ISATTY (ui->instream))
     {
       char *history_value;
       int expanded;
@@ -648,9 +650,11 @@ void
 command_line_handler (char *rl)
 {
   struct buffer *line_buffer = get_command_line_buffer ();
+  struct ui *ui = current_ui;
   char *cmd;
 
-  cmd = handle_line_of_input (line_buffer, rl, instream == stdin, "prompt");
+  cmd = handle_line_of_input (line_buffer, rl, ui->instream == stdin,
+			      "prompt");
   if (cmd == (char *) EOF)
     {
       /* stdin closed.  The connection with the terminal is gone.
@@ -658,7 +662,7 @@ command_line_handler (char *rl)
 	 hung up but GDB is still alive.  In such a case, we just quit
 	 gdb killing the inferior program too.  */
       printf_unfiltered ("quit\n");
-      execute_command ("quit", stdin == instream);
+      execute_command ("quit", stdin == ui->instream);
     }
   else if (cmd == NULL)
     {
@@ -693,9 +697,9 @@ gdb_readline_no_editing_callback (gdb_client_data client_data)
      stream after '\n'.  If we buffer the input and fgetc drains the
      stream, getting stuff beyond the newline as well, a select, done
      afterwards will not trigger.  */
-  if (!done_once && !ISATTY (instream))
+  if (!done_once && !ISATTY (ui->instream))
     {
-      setbuf (instream, NULL);
+      setbuf (ui->instream, NULL);
       done_once = 1;
     }
 
@@ -711,7 +715,7 @@ gdb_readline_no_editing_callback (gdb_client_data client_data)
     {
       /* Read from stdin if we are executing a user defined command.
          This is the right thing for prompt_for_continue, at least.  */
-      c = fgetc (instream ? instream : stdin);
+      c = fgetc (ui->instream ? ui->instream : stdin);
 
       if (c == EOF)
 	{
@@ -833,7 +837,7 @@ handle_sigint (int sig)
 static void
 async_sigterm_handler (gdb_client_data arg)
 {
-  quit_force (NULL, stdin == instream);
+  quit_force (NULL, stdin == current_ui->instream);
 }
 
 /* See defs.h.  */
@@ -1015,7 +1019,7 @@ gdb_setup_readline (void)
 
   /* If the input stream is connected to a terminal, turn on
      editing.  */
-  if (ISATTY (instream))
+  if (ISATTY (ui->instream))
     {
       /* Tell gdb that we will be using the readline library.  This
 	 could be overwritten by a command in .gdbinit like 'set
@@ -1038,11 +1042,11 @@ gdb_setup_readline (void)
   ui->input_handler = command_line_handler;
 
   /* Tell readline to use the same input stream that gdb uses.  */
-  rl_instream = instream;
+  rl_instream = ui->instream;
 
   /* Get a file descriptor for the input stream, so that we can
      register it with the event loop.  */
-  input_fd = fileno (instream);
+  input_fd = fileno (ui->instream);
 
   /* Now we need to create the event sources for the input file
      descriptor.  */
