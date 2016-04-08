@@ -341,6 +341,7 @@ enum command_line_switch
   OPTION_STRIP_UNNEEDED_SYMBOLS,
   OPTION_SUBSYSTEM,
   OPTION_UPDATE_SECTION,
+  OPTION_VERILOG_DATA_WIDTH,
   OPTION_WEAKEN,
   OPTION_WEAKEN_SYMBOLS,
   OPTION_WRITABLE_TEXT
@@ -471,6 +472,7 @@ static struct option copy_options[] =
   {"target", required_argument, 0, 'F'},
   {"update-section", required_argument, 0, OPTION_UPDATE_SECTION},
   {"verbose", no_argument, 0, 'v'},
+  {"verilog-data-width", required_argument, 0, OPTION_VERILOG_DATA_WIDTH},
   {"version", no_argument, 0, 'V'},
   {"weaken", no_argument, 0, OPTION_WEAKEN},
   {"weaken-symbol", required_argument, 0, 'W'},
@@ -496,6 +498,11 @@ extern unsigned int Chunk;
    This variable is declare in bfd/srec.c and can be toggled
    on by the --srec-forceS3 command line switch.  */
 extern bfd_boolean S3Forced;
+
+/* Width of data in bytes for verilog output.
+   This variable is declared in bfd/verilog.c and can be modified by the --verilog-data-width parameter. */
+
+extern unsigned int VerilogDataWidth;
 
 /* Forward declarations.  */
 static void setup_section (bfd *, asection *, void *);
@@ -629,6 +636,7 @@ copy_usage (FILE *stream, int exit_status)
      --decompress-debug-sections   Decompress DWARF debug sections using zlib\n\
      --elf-stt-common=[yes|no]     Generate ELF common symbols with STT_COMMON\n\
                                      type\n\
+     --verilog-data-width <number> Specifies data width, in bytes, for verilog output\n\
   -v --verbose                     List all object files modified\n\
   @<file>                          Read options from <file>\n\
   -V --version                     Display this program's version number\n\
@@ -4584,6 +4592,12 @@ copy_main (int argc, char *argv[])
 			       optarg);
 		}
 	    }
+	  break;
+
+	case OPTION_VERILOG_DATA_WIDTH:
+	  VerilogDataWidth = parse_vma (optarg, "--verilog-data-width");
+	  if (VerilogDataWidth < 1)
+	    fatal (_("verilog data width must be at least 1 byte"));
 	  break;
 
 	case 0:
