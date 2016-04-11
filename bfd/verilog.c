@@ -204,11 +204,18 @@ verilog_write_record (bfd *abfd,
   for (src = data; src < end; src += VerilogDataWidth)
     {
       int i;
-      for (i = VerilogDataWidth-1; i >= 0; i--)
-	{
-	  TOHEX (dst, src[i]);
-	  dst += 2;
-	}
+      if (bfd_little_endian(abfd))
+	for (i = VerilogDataWidth-1; i >= 0; i--)
+	  {
+	    TOHEX (dst, src[i]);
+	    dst += 2;
+	  }
+      else
+	for (i = 0; i < (int)VerilogDataWidth; i++)
+	  {
+	    TOHEX (dst, src[i]);
+	    dst += 2;
+	  }
       *dst++ = ' ';
     }
   *dst++ = '\r';
