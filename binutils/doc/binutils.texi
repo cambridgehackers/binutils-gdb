@@ -1714,7 +1714,7 @@ like this:
 @smallexample
  objcopy --add-gnu-debuglink=foo.debug
 @end smallexample
- 
+
 At debug time the debugger will attempt to look for the separate debug
 info file in a set of known locations.  The exact set of these
 locations varies depending upon the distribution being used, but it
@@ -2838,7 +2838,7 @@ sequences that it can find.
 
 For backwards compatibility any file that occurs after a command line
 option of just @option{-} will also be scanned in full, regardless of
-the presence of any @option{-d} option. 
+the presence of any @option{-d} option.
 
 @command{strings} is mainly useful for determining the contents of
 non-text files.
