@@ -58,8 +58,8 @@
 #include "libiberty.h"
 #include "safe-ctype.h"
 
-// modified by obcopy.c
-// data width in bytes
+/* modified by obcopy.c
+   data width in bytes */
 unsigned int VerilogDataWidth = 1;
 
 /* Macros for converting between hex and binary.  */
